@@ -1,0 +1,13 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+authors = ["Romain Failla <rigbuntu@gmail.com>"]
+edition = "2024"
+
+[workspace.dependencies]
+regex = "1.13.1"
+serde = { version = "1.0.229", features = ["alloc", "derive"] }
+smol_str = { version = "0.3.6", features = ["serde"] }
+thiserror = "2.0.21"

@@ -1,0 +1,13 @@
+[package]
+name = "toyproto-syntax"
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+base32ct = { version = "0.3.1", features = ["alloc"] }
+hickory-proto = "0.26.3"
+regex.workspace = true
+serde.workspace = true
+serde_test = "1.0.177"
+smol_str.workspace = true
+thiserror.workspace = true
