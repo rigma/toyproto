@@ -37,7 +37,7 @@ pub trait Method {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Plc;
 
 impl Method for Plc {
@@ -58,7 +58,7 @@ impl Method for Plc {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Web;
 
 impl Method for Web {
