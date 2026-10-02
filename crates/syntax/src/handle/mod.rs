@@ -146,6 +146,48 @@ impl IntoName for &Handle {
     }
 }
 
+impl PartialEq<&Handle> for Handle {
+    #[inline(always)]
+    fn eq(&self, other: &&Handle) -> bool {
+        self == *other
+    }
+}
+
+impl PartialEq<&String> for Handle {
+    #[inline(always)]
+    fn eq(&self, other: &&String) -> bool {
+        self == *other
+    }
+}
+
+impl PartialEq<&[u8]> for Handle {
+    #[inline(always)]
+    fn eq(&self, other: &&[u8]) -> bool {
+        self.0.as_bytes() == *other
+    }
+}
+
+impl PartialEq<&str> for Handle {
+    #[inline(always)]
+    fn eq(&self, other: &&str) -> bool {
+        self.0 == *other
+    }
+}
+
+impl PartialEq<[u8]> for Handle {
+    #[inline(always)]
+    fn eq(&self, other: &[u8]) -> bool {
+        self.0.as_bytes() == other
+    }
+}
+
+impl PartialEq<String> for Handle {
+    #[inline(always)]
+    fn eq(&self, other: &String) -> bool {
+        self.0 == other
+    }
+}
+
 impl Serialize for Handle {
     #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

@@ -110,6 +110,16 @@ where
             where
                 E: de::Error,
             {
+                dbg!(&value);
+                value.parse().map_err(|err| E::custom(format!("{err}")))
+            }
+
+            #[inline]
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                dbg!(value);
                 value.parse().map_err(|err| E::custom(format!("{err}")))
             }
 
@@ -122,11 +132,12 @@ where
             }
         }
 
-        deserializer.deserialize_string(DidVisitor(PhantomData))
+        deserializer.deserialize_newtype_struct("Did", DidVisitor(PhantomData))
     }
 }
 
 impl<M: Method> Eq for Did<M> {}
+
 impl<M> PartialEq for Did<M>
 where
     M: Method,
@@ -134,6 +145,86 @@ where
     #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
         self.identifier == other.identifier
+    }
+}
+
+impl<M> PartialEq<&Box<[u8]>> for Did<M>
+where
+    M: Method,
+{
+    #[inline(always)]
+    fn eq(&self, other: &&Box<[u8]>) -> bool {
+        self.identifier.as_bytes() == other.as_ref()
+    }
+}
+
+impl<M> PartialEq<&Did<M>> for Did<M>
+where
+    M: Method,
+{
+    #[inline(always)]
+    fn eq(&self, other: &&Did<M>) -> bool {
+        self.identifier == other.identifier
+    }
+}
+
+impl<M> PartialEq<&String> for Did<M>
+where
+    M: Method,
+{
+    #[inline(always)]
+    fn eq(&self, other: &&String) -> bool {
+        self.identifier.as_str() == other.as_str()
+    }
+}
+
+impl<M> PartialEq<&[u8]> for Did<M>
+where
+    M: Method,
+{
+    #[inline(always)]
+    fn eq(&self, other: &&[u8]) -> bool {
+        self.identifier.as_bytes() == *other
+    }
+}
+
+impl<M> PartialEq<&str> for Did<M>
+where
+    M: Method,
+{
+    #[inline(always)]
+    fn eq(&self, other: &&str) -> bool {
+        self.identifier.as_str() == *other
+    }
+}
+
+impl<M> PartialEq<Box<[u8]>> for Did<M>
+where
+    M: Method,
+{
+    #[inline(always)]
+    fn eq(&self, other: &Box<[u8]>) -> bool {
+        self.identifier.as_bytes() == other.as_ref()
+    }
+}
+
+impl<M> PartialEq<String> for Did<M>
+where
+    M: Method,
+{
+    #[inline(always)]
+    fn eq(&self, other: &String) -> bool {
+        self.identifier.as_str() == other
+    }
+}
+
+impl<M> PartialEq<[u8]> for Did<M>
+where
+    M: Method,
+{
+    #[inline(always)]
+    fn eq(&self, other: &[u8]) -> bool {
+        self.identifier.as_bytes() == other
     }
 }
 
@@ -161,6 +252,42 @@ where
         S: Serializer,
     {
         serializer.serialize_newtype_struct("Did", &format!("{self}"))
+    }
+}
+
+impl<M> TryFrom<&Box<[u8]>> for Did<M>
+where
+    M: Method,
+{
+    type Error = ParseDidError;
+
+    #[inline]
+    fn try_from(value: &Box<[u8]>) -> Result<Self, Self::Error> {
+        String::from_utf8_lossy(value).parse()
+    }
+}
+
+impl<M> TryFrom<Box<[u8]>> for Did<M>
+where
+    M: Method,
+{
+    type Error = ParseDidError;
+
+    #[inline]
+    fn try_from(value: Box<[u8]>) -> Result<Self, Self::Error> {
+        String::from_utf8_lossy(&value).parse()
+    }
+}
+
+impl<M> TryFrom<&[u8]> for Did<M>
+where
+    M: Method,
+{
+    type Error = ParseDidError;
+
+    #[inline]
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        String::from_utf8_lossy(value).parse()
     }
 }
 
