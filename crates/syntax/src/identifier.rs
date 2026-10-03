@@ -1,10 +1,13 @@
 use crate::{
-    did::{Did, Method},
+    did::{
+        Did,
+        methods::{Method, Universal},
+    },
     handle::Handle,
 };
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum Identifier<M: Method> {
+pub enum Identifier<M: Method = Universal> {
     Did(Did<M>),
 
     Handle(Handle),

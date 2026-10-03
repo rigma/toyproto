@@ -42,6 +42,15 @@ impl Handle {
     pub fn is_test(&self) -> bool {
         self.0.ends_with(".test")
     }
+
+    fn labels(&self) -> Vec<String> {
+        let mut labels = vec!["_atproto".into()];
+        self.0
+            .split('.')
+            .for_each(|label| labels.push(label.into()));
+
+        labels
+    }
 }
 
 impl AsRef<[u8]> for Handle {
@@ -122,10 +131,10 @@ impl FromStr for Handle {
     }
 }
 
-impl IntoName for Handle {
+impl IntoName for &Handle {
     #[inline]
     fn into_name(self) -> Result<Name, ProtoError> {
-        Name::from_labels(["_atproto", self.0.as_str()])
+        Name::from_labels(self.labels())
     }
 
     #[inline]
@@ -134,10 +143,10 @@ impl IntoName for Handle {
     }
 }
 
-impl IntoName for &Handle {
+impl IntoName for Handle {
     #[inline]
     fn into_name(self) -> Result<Name, ProtoError> {
-        Name::from_labels(["_atproto", self.0.as_str()])
+        Name::from_labels(self.labels())
     }
 
     #[inline]

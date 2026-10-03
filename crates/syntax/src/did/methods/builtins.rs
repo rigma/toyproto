@@ -1,48 +1,18 @@
-use super::errors::ParseDidError;
-use crate::handle::Handle;
+use super::{Method, MethodName};
+use crate::{did::errors::ParseDidError, handle::Handle};
 use base32ct::{Base32, Encoding};
 use regex::Regex;
-use smol_str::SmolStr;
 use std::sync::LazyLock;
 
 static DID_WEB_LOCALHOST_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^localhost(?:%3A([0-9]{1,5}))$").expect("invalid syntax"));
-
-pub trait Method {
-    fn name() -> &'static str;
-    fn validate_identifier(identifier: impl AsRef<str>) -> Result<(), ParseDidError>;
-
-    fn parse(did: impl AsRef<str>) -> Result<SmolStr, ParseDidError> {
-        let did = did.as_ref();
-        if !super::REGEX.is_match(did) {
-            return Err(ParseDidError::InvalidSyntax);
-        } else if did.len() > super::MAX_LENGTH {
-            return Err(ParseDidError::TooLong);
-        }
-
-        let prefix = format!("did:{}:", Self::name());
-        if did.starts_with(&prefix) {
-            let identifier = did[prefix.len()..].to_lowercase();
-            Self::validate_identifier(&identifier)?;
-
-            Ok(SmolStr::new(identifier))
-        } else {
-            Err(ParseDidError::BadMethod(
-                did.split(':')
-                    .nth(1)
-                    .map(|method| method.into())
-                    .unwrap_or_default(),
-            ))
-        }
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct Plc;
 
 impl Method for Plc {
     #[inline(always)]
-    fn name() -> &'static str {
+    fn name() -> impl Into<MethodName> {
         "plc"
     }
 
@@ -58,12 +28,27 @@ impl Method for Plc {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct Universal;
+
+impl Method for Universal {
+    #[inline(always)]
+    fn name() -> impl Into<MethodName> {
+        MethodName::Undefined
+    }
+
+    #[inline(always)]
+    fn validate_identifier(_: impl AsRef<str>) -> Result<(), ParseDidError> {
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Web;
 
 impl Method for Web {
     #[inline(always)]
-    fn name() -> &'static str {
+    fn name() -> impl Into<MethodName> {
         "web"
     }
 

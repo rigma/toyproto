@@ -2,8 +2,7 @@ mod errors;
 pub mod methods;
 
 pub use errors::ParseDidError;
-pub use methods::Method;
-use methods::Web;
+use methods::{Method, MethodName, Universal, Web};
 use regex::Regex;
 use serde::{
     de::{self, Deserialize, Visitor},
@@ -18,9 +17,26 @@ static REGEX: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 #[derive(Clone, Debug, Hash, Ord, PartialOrd)]
-pub struct Did<M: Method> {
+pub struct Did<M: Method = Universal> {
     pub identifier: SmolStr,
     method: PhantomData<M>,
+}
+
+impl Did<Universal> {
+    #[inline]
+    pub fn to_method<M>(&self) -> Result<Did<M>, ParseDidError>
+    where
+        M: Method,
+    {
+        self.identifier.parse()
+    }
+}
+
+impl Did<Web> {
+    #[inline]
+    pub fn is_localhost(&self) -> bool {
+        self.identifier.starts_with("localhost")
+    }
 }
 
 impl<M> Did<M>
@@ -42,12 +58,15 @@ where
     pub fn as_str(&self) -> &str {
         &self.identifier
     }
-}
 
-impl Did<Web> {
-    #[inline]
-    pub fn is_localhost(&self) -> bool {
-        self.identifier.starts_with("localhost")
+    #[inline(always)]
+    pub fn method(&self) -> MethodName {
+        M::name().into()
+    }
+
+    #[inline(always)]
+    pub fn starts_with(&self, pattern: impl AsRef<str>) -> bool {
+        self.identifier.starts_with(pattern.as_ref())
     }
 }
 
@@ -98,11 +117,13 @@ where
 
             #[inline]
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                write!(
-                    formatter,
-                    "expecting a valid DID string using method '{}'",
-                    M::name()
-                )
+                match M::name().into() {
+                    MethodName::Defined(method_name) => write!(
+                        formatter,
+                        "expecting a valid DID string using method '{method_name}'"
+                    ),
+                    MethodName::Undefined => write!(formatter, "expecting a valid DID string"),
+                }
             }
 
             #[inline]
@@ -110,7 +131,6 @@ where
             where
                 E: de::Error,
             {
-                dbg!(&value);
                 value.parse().map_err(|err| E::custom(format!("{err}")))
             }
 
@@ -119,7 +139,6 @@ where
             where
                 E: de::Error,
             {
-                dbg!(value);
                 value.parse().map_err(|err| E::custom(format!("{err}")))
             }
 
@@ -297,17 +316,28 @@ where
 {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "did:{}:{}", M::name(), self.identifier)
+        match self.method() {
+            MethodName::Defined(method_name) => write!(f, "did:{method_name}:{}", self.identifier),
+            MethodName::Undefined => write!(f, "{}", self.identifier),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::assert_matches;
+
     use super::{
         Did, ParseDidError,
         methods::{Plc, Web},
     };
     use serde_test::{Token, assert_tokens};
+
+    #[test]
+    fn it_parses_universal_did() {
+        assert_matches!("did:plc:7iza6de2dwap2sbkpav7c6c6".parse::<Did>(), Ok(_));
+        assert_matches!("did:web:example.com".parse::<Did>(), Ok(_));
+    }
 
     #[test]
     fn it_raises_errors_on_invalid_plc() {
