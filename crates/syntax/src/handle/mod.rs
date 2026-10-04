@@ -112,6 +112,14 @@ impl<'de> Deserialize<'de> for Handle {
     }
 }
 
+#[cfg(test)]
+impl From<&str> for Handle {
+    #[inline]
+    fn from(value: &str) -> Self {
+        value.parse().expect("invalid handle syntax")
+    }
+}
+
 impl FromStr for Handle {
     type Err = ParseHandleError;
 
