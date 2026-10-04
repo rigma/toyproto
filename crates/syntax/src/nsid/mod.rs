@@ -4,9 +4,13 @@ mod errors;
 use crate::handle::Handle;
 use builder::NsidBuilder;
 pub use errors::{BuildNsidError, ParseNsidError};
+use hickory_proto::{
+    ProtoError,
+    rr::{IntoName, Name},
+};
 use regex::Regex;
 use smol_str::{SmolStr, ToSmolStr};
-use std::{fmt, str::FromStr, sync::LazyLock};
+use std::{fmt, net::IpAddr, str::FromStr, sync::LazyLock};
 
 static REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(\.[a-zA-Z]([a-zA-Z0-9]{0,62})?)$")
@@ -77,6 +81,30 @@ impl FromStr for Nsid {
             authority: authority.parse()?,
             name: name.to_smolstr(),
         })
+    }
+}
+
+impl IntoName for &Nsid {
+    #[inline]
+    fn into_name(self) -> Result<Name, ProtoError> {
+        Name::from_labels(self.authority.labels_with_prefix("_lexicon"))
+    }
+
+    #[inline]
+    fn to_ip(&self) -> Option<std::net::IpAddr> {
+        IpAddr::from_str(&self.authority.labels_with_prefix("_lexicon").join(".")).ok()
+    }
+}
+
+impl IntoName for Nsid {
+    #[inline]
+    fn into_name(self) -> Result<Name, ProtoError> {
+        Name::from_labels(self.authority.labels_with_prefix("_lexicon"))
+    }
+
+    #[inline]
+    fn to_ip(&self) -> Option<IpAddr> {
+        IpAddr::from_str(&self.authority.labels_with_prefix("_lexicon").join(".")).ok()
     }
 }
 

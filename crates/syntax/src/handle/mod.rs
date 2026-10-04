@@ -23,28 +23,34 @@ pub static REGEX: LazyLock<Regex> = LazyLock::new(|| {
 pub struct Handle(SmolStr);
 
 impl Handle {
-    #[inline(always)]
+    #[inline]
     pub fn new(handle: impl AsRef<str>) -> Result<Self, ParseHandleError> {
         handle.as_ref().parse()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn is_invalid(&self) -> bool {
         self.0.ends_with(".invalid")
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn is_test(&self) -> bool {
         self.0.ends_with(".test")
     }
 
-    fn labels(&self) -> Vec<String> {
-        let mut labels = vec!["_atproto".into()];
+    #[inline]
+    pub fn labels(&self) -> Vec<String> {
+        self.labels_with_prefix("_atproto")
+    }
+
+    #[inline]
+    pub fn labels_with_prefix(&self, prefix: impl Into<String>) -> Vec<String> {
+        let mut labels = vec![prefix.into()];
         self.0
             .split('.')
             .for_each(|label| labels.push(label.into()));
@@ -147,7 +153,7 @@ impl IntoName for &Handle {
 
     #[inline]
     fn to_ip(&self) -> Option<IpAddr> {
-        IpAddr::from_str(&format!("_atproto.{}", self.0)).ok()
+        IpAddr::from_str(&self.labels().join(".")).ok()
     }
 }
 
