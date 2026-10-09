@@ -2,6 +2,7 @@ pub mod did;
 pub mod handle;
 mod identifier;
 pub mod nsid;
+pub mod tid;
 
 pub use identifier::Identifier;
 
